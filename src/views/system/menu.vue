@@ -120,7 +120,7 @@ const loadMenuData = async () => {
     // 确保每个字段都有默认值，避免空值
     const menus = response.data.map((menu: any) => ({
       id: menu.id || 0,
-      menuName: menu.menuName || menu.name || '', // 兼容可能的字段差异
+      menuName: menu.menuName || '',
       path: menu.path || '',
       pid: menu.pid || 0,
     }));
@@ -193,8 +193,10 @@ const submitEdit = async () => {
       const response = await axios.post("http://localhost:3001/api/menus", editForm.value)
       // 根据后端返回的结构调整
       tableData.value.push({
-        ...editForm.value,
-        id: response.data.id
+        id: response.data.id,
+        menuName: editForm.value.menuName,
+        path: editForm.value.path,
+        pid: editForm.value.pid
       })
       ElMessage.success('新增成功')
     }

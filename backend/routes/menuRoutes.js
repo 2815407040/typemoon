@@ -1,55 +1,17 @@
-const menuRoutes = [
-    {
-        path: '/index',
-        name: 'Index',
-        meta: {
-                title: '首页',
-},
-children: [
-    {
-        path: 'system/user',
-        name: 'User',
-        meta: {
-                title: '用户管理',
-}
-},
-{
-    path: 'system/role',
-        name: 'Role',
-    meta: {
-    title: '角色管理',
-}
-},
-{
-    path: 'system/menu',
-        name: 'Menu',
-    meta: {
-    title: '菜单管理',
-}
-}
-]
-},
-{
-    path: '/HomeView',
-        name: 'HomeView',
-    meta: {
-    title: '内容首页',
-},
-    children: [
-        {
-            path: '',
-            name: 'search',
-            meta: {
-                    title: '搜索页',
-}
-},
-    {
-        path: 'show/:title/:lineNumber',
-            name: 'show',
-        meta: {
-        title: '详情页',
-    }
-    }
-]
-}
-]
+const express = require('express');
+const router = express.Router();
+const menuController = require('../controllers/menuController');
+
+// 获取所有菜单
+router.get('/', menuController.getMenus);
+
+// 新增菜单
+router.post('/', menuController.addMenu);
+
+// 更新菜单
+router.put('/:id', menuController.updateMenu);
+
+// 删除菜单
+router.delete('/:id', menuController.deleteMenu);
+
+module.exports = router;
