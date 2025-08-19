@@ -9,21 +9,18 @@
       </el-form-item>
       <el-button type="primary" @click="onSubmit">查询</el-button>
       <el-button @click="resetForm">重置</el-button>
-      <el-button @click="handleAdd">新增</el-button>
+      <el-button type="primary" @click="handleAdd">新增</el-button>
     </el-form>
   </div>
 
   <!-- 编辑菜单对话框 -->
   <el-dialog v-model="editDialogVisible" :title="dialogTitle" width="500px">
-    <el-form :model="editForm" label-width="80px">
-      <el-form-item label="id" prop="path">
-        <el-input v-model="editForm.id" />
-      </el-form-item>
+    <el-form :model="editForm" label-width="80px" :rules="formRules" ref="editFormRef">
       <el-form-item label="菜单名称" prop="menuName">
-        <el-input v-model="editForm.menuName" />
+        <el-input v-model="editForm.menuName" placeholder="请输入菜单名称" />
       </el-form-item>
       <el-form-item label="路由路径" prop="path">
-        <el-input v-model="editForm.path" />
+        <el-input v-model="editForm.path" placeholder="请输入路由路径" />
       </el-form-item>
       <el-form-item label="父菜单">
         <el-select v-model="editForm.pid" placeholder="请选择父菜单">
@@ -33,6 +30,7 @@
               :key="menu.id"
               :label="menu.menuName"
               :value="menu.id"
+              :disabled="editForm.id && menu.id === editForm.id"
           />
         </el-select>
       </el-form-item>
@@ -59,6 +57,7 @@
       <el-table-column prop="menuName" label="菜单名称" width="180" />
       <el-table-column prop="path" label="路由路径" width="200" />
       <el-table-column prop="pid" label="父菜单ID" width="120" />
+      <el-table-column prop="parentName" label="父菜单名称" width="180" :formatter="formatParentName" />
       <el-table-column fixed="right" label="操作" min-width="180">
         <template #default="scope">
           <el-button link type="primary" size="small" @click="handleDetail(scope.row)">
@@ -80,7 +79,6 @@
 import { onMounted, reactive, ref, computed } from 'vue'
 import axios from 'axios'
 import { ElMessage } from "element-plus";
-
 
 interface Menu {
   id: number
@@ -122,9 +120,9 @@ const loadMenuData = async () => {
     // 确保每个字段都有默认值，避免空值
     const menus = response.data.map((menu: any) => ({
       id: menu.id || 0,
-      menuName: menu.name || '', // 为空时显示空字符串
-      path: menu.path || '',         // 为空时显示空字符串
-      pid: menu.pid || 0   // 默认为0（无父菜单）
+      menuName: menu.menuName || menu.name || '', // 兼容可能的字段差异
+      path: menu.path || '',
+      pid: menu.pid || 0,
     }));
 
     tableData.value = menus;
@@ -138,7 +136,6 @@ const loadMenuData = async () => {
 // 筛选后的数据
 const filteredTableData = computed(() => {
   return tableData.value.filter(menu => {
-    // 处理可能为 undefined 或 null 的字段，转为空字符串避免报错
     const menuName = (menu.menuName || '').toLowerCase();
     const path = (menu.path || '').toLowerCase();
     const searchMenuName = (formInline.menuName || '').toLowerCase();
@@ -149,7 +146,6 @@ const filteredTableData = computed(() => {
     return matchMenuName && matchPath;
   });
 });
-
 
 // 打开编辑对话框
 const handleEdit = (row: Menu) => {
@@ -173,6 +169,16 @@ const handleAdd = () => {
 // 提交编辑表单
 const submitEdit = async () => {
   try {
+    // 表单验证
+    if (!editForm.value.menuName.trim()) {
+      ElMessage.warning('请输入菜单名称');
+      return;
+    }
+    if (!editForm.value.path.trim()) {
+      ElMessage.warning('请输入路由路径');
+      return;
+    }
+
     if (editForm.value.id) {
       // 编辑操作
       await axios.put(`http://localhost:3001/api/menus/${editForm.value.id}`, editForm.value)
@@ -185,7 +191,11 @@ const submitEdit = async () => {
     } else {
       // 新增操作
       const response = await axios.post("http://localhost:3001/api/menus", editForm.value)
-      tableData.value.push(response.data)
+      // 根据后端返回的结构调整
+      tableData.value.push({
+        ...editForm.value,
+        id: response.data.id
+      })
       ElMessage.success('新增成功')
     }
     editDialogVisible.value = false
@@ -205,6 +215,13 @@ const handleDelete = (row: Menu) => {
 // 确认删除
 const confirmDelete = async () => {
   try {
+    // 检查是否有子菜单
+    const hasChildren = tableData.value.some(menu => menu.pid === deleteMenuId.value)
+    if (hasChildren) {
+      ElMessage.warning('请先删除子菜单')
+      return
+    }
+
     await axios.delete(`http://localhost:3001/api/menus/${deleteMenuId.value}`)
     // 从本地表格数据中移除
     tableData.value = tableData.value.filter(item => item.id !== deleteMenuId.value)
@@ -217,7 +234,11 @@ const confirmDelete = async () => {
 }
 
 // 查询方法
-const onSubmit = () => {}
+const onSubmit = () => {
+  // 触发计算属性重新计算
+  console.log('查询条件:', formInline)
+  // 实际项目中可以在这里调用后端接口进行查询
+}
 
 // 重置表单
 const resetForm = () => {
@@ -228,8 +249,31 @@ const resetForm = () => {
 // 详情操作
 const handleDetail = (row: Menu) => {
   console.log('查看详情:', row)
-  ElMessage.info('详情功能待实现')
+  // 可以打开详情对话框展示完整信息
+  ElMessage.info(`菜单ID: ${row.id}, 名称: ${row.menuName}`)
 }
+
+// 表单验证规则
+const formRules = reactive({
+  menuName: [
+    { required: true, message: '请输入菜单名称', trigger: 'blur' },
+    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  path: [
+    { required: true, message: '请输入路由路径', trigger: 'blur' },
+    { pattern: /^\/?[\w-\/]*$/, message: '路径格式不正确', trigger: 'blur' }
+  ]
+})
+
+// 格式化父菜单名称显示
+const formatParentName = (row: Menu) => {
+  if (row.pid === 0) return '无'
+  const parent = tableData.value.find(menu => menu.id === row.pid)
+  return parent?.menuName || '未知'
+}
+
+// 表单引用
+const editFormRef = ref()
 
 // 页面挂载时加载数据
 onMounted(() => {
