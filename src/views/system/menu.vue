@@ -117,7 +117,7 @@ const editForm = ref<Menu>({
 // 加载菜单数据
 const loadMenuData = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/sys_menu");
+    const response = await axios.get("http://localhost:3001/api/menus");
     console.log("原始菜单数据:", response.data);
     // 确保每个字段都有默认值，避免空值
     const menus = response.data.map((menu: any) => ({
@@ -175,7 +175,7 @@ const submitEdit = async () => {
   try {
     if (editForm.value.id) {
       // 编辑操作
-      await axios.put(`http://localhost:3000/sys_menu/${editForm.value.id}`, editForm.value)
+      await axios.put(`http://localhost:3001/api/menus/${editForm.value.id}`, editForm.value)
       // 更新本地表格数据
       const index = tableData.value.findIndex(item => item.id === editForm.value.id)
       if (index !== -1) {
@@ -184,7 +184,7 @@ const submitEdit = async () => {
       ElMessage.success('编辑成功')
     } else {
       // 新增操作
-      const response = await axios.post("http://localhost:3000/sys_menu", editForm.value)
+      const response = await axios.post("http://localhost:3001/api/menus", editForm.value)
       tableData.value.push(response.data)
       ElMessage.success('新增成功')
     }
@@ -205,7 +205,7 @@ const handleDelete = (row: Menu) => {
 // 确认删除
 const confirmDelete = async () => {
   try {
-    await axios.delete(`http://localhost:3000/sys_menu/${deleteMenuId.value}`)
+    await axios.delete(`http://localhost:3001/api/menus/${deleteMenuId.value}`)
     // 从本地表格数据中移除
     tableData.value = tableData.value.filter(item => item.id !== deleteMenuId.value)
     ElMessage.success('删除成功')

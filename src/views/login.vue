@@ -38,7 +38,7 @@ const user = ref({
 
 const handleLogin = () => {
   // axios 登录请求
-  axios.get("http://localhost:3001/sys_user", { params: user.value }).then(response => {
+  axios.get("http://localhost:3001/api/users", { params: user.value }).then(response => {
     console.log(response.data)
     if (response.data.length > 0) {
       ElMessage.success('登录成功')

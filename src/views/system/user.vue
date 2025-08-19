@@ -147,7 +147,7 @@ const editForm = ref<User>({
 // 加载用户数据
 const loadUserData = async () => {
   try {
-    const response = await axios.get("http://localhost:3001/sys_user")
+    const response = await axios.get("http://localhost:3001/api/users")
     console.log(response.data)
     const users = response.data.map((user) => ({
       ...user,
@@ -188,7 +188,7 @@ const formatRole = (row: User) => {
 const toggleLockStatus = async (row: User) => {
   try {
     row.isLocked = !row.isLocked
-    await axios.patch(`http://localhost:3001/sys_user/${row.id}`, {
+    await axios.patch(`http://localhost:3001/api/users/${row.id}`, {
       isLocked: row.isLocked
     })
     ElMessage.success('状态更新成功')
@@ -208,7 +208,7 @@ const handleEdit = (row: User) => {
 // 提交编辑表单（适配JSON Server的PUT请求）
 const submitEdit = async () => {
   try {
-    await axios.put(`http://localhost:3001/sys_user/${editForm.value.id}`, editForm.value)
+    await axios.put(`http://localhost:3001/api/users/${editForm.value.id}`, editForm.value)
     // 更新本地表格数据
     const index = tableData.value.findIndex(item => item.id === editForm.value.id)
     if (index !== -1) {
@@ -232,7 +232,7 @@ const handleDelete = (row: User) => {
 // 确认删除（适配JSON Server的DELETE请求）
 const confirmDelete = async () => {
   try {
-    await axios.delete(`http://localhost:3001/sys_user/${deleteUserId.value}`)
+    await axios.delete(`http://localhost:3001/api/users/${deleteUserId.value}`)
     // 从本地表格数据中移除
     tableData.value = tableData.value.filter(item => item.id !== deleteUserId.value)
     ElMessage.success('删除成功')

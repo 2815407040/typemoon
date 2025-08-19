@@ -51,7 +51,7 @@ onMounted(() => {
 
 const loadRoleData = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/sys_role")
+    const response = await axios.get("http://localhost:3001/api/roles")
     const roles = response.data
     console.log("接口返回原始数据:", response.data)
     tableData.value = roles
