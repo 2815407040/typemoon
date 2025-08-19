@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"  // 开发时使用nodemon自动重启
+    "dev": "nodemon app.js"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
