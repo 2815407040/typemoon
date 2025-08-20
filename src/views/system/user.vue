@@ -23,6 +23,7 @@
       </el-form-item>
       <el-form-item label="角色">
         <el-select v-model="editForm.role" placeholder="请选择角色">
+          <el-option label="超级管理员" value="0" />
           <el-option label="管理员" value="1" />
           <el-option label="用户" value="2" />
         </el-select>
@@ -181,7 +182,13 @@ const pagedTableData = computed(() => {
 
 // 格式化角色显示
 const formatRole = (row: User) => {
-  return row.role === '1' ? '管理员' : '用户'
+  if(row.role === '0') {
+    return '超级管理员'
+  }else if(row.role === '1') {
+    return '管理员'
+  }else{
+    return '用户'
+  }
 }
 
 // 切换锁定状态（同步到JSON Server）

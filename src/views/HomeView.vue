@@ -106,7 +106,7 @@ const selectResult = (item: { lineNumber: number; content: string; cleanContent:
 
 <style scoped>
 .header{
-  background-image: url('public/header.jpg');
+  background-image: url('../../public/images/header.jpg');
   height: 230px;
   width: 100%;
   position: relative;
@@ -161,7 +161,7 @@ const selectResult = (item: { lineNumber: number; content: string; cleanContent:
 .nav{
   height: 30px;
   width: 100%;
-  background-image: url('public/nav.png');
+  background-image: url('../../public/images/nav.png');
   background-repeat: no-repeat;
   background-size: cover;
 }

@@ -44,7 +44,7 @@
 }
 
 .option {
-  background-image: url('/xuanxiang.png');
+  background-image: url('/images/xuanxiang.png');
   width: 200px;
   max-width: 100%;
   height: 100px;
