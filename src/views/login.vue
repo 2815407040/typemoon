@@ -43,33 +43,44 @@ const handleLogin = () => {
     return
   }
 
-  // 关键修复：使用POST请求调用登录接口
-  axios.post("http://localhost:3001/api/users/login", {
-    userName: user.value.userName,
-    password: user.value.password
+  // 改用POST请求，使用正确的登录接口地址
+  axios.post("http://localhost:3001/api/users/login", user.value,{
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
       .then(response => {
-        console.log("登录成功:", response.data)
-        ElMessage.success('登录成功')
-        const userInfo = response.data.user
+        console.log(response.data)
+        // 后端返回格式是 { message: '登录成功', user: userInfo }
+        if (response.data.user) {
+          ElMessage.success('登录成功')
+          const userInfo = response.data.user
 
-        Cookies.set('currentUser', JSON.stringify(userInfo), { expires: 1, path: '/' })
+          Cookies.set('currentUser', JSON.stringify(userInfo), { expires: 1, path: '/' })
 
-        // 根据角色跳转
-        if (userInfo.role === '1') {
-          router.push('/index')
-        } else if (userInfo.role === '2') {
-          router.push('/HomeView')
+          // 获取角色信息并跳转
+          const role = userInfo.role
+          if (role === '1') {
+            router.push('/index')
+          } else if (role === '2') {
+            router.push('/HomeView')
+          }
+        } else {
+          ElMessage.error(response.data.message || '登录失败')
         }
       })
       .catch(error => {
-        console.error("登录请求失败:", error)
-        if (error.response && error.response.status === 401) {
-          ElMessage.error('用户名或密码错误')
-        } else {
-          ElMessage.error('登录失败，请检查网络或服务器')
-        }
-      })
+        console.error("登录请求失败:", error);
+        // 打印服务器返回的具体错误信息
+        console.log("服务器响应:", error.response?.data);
+        console.log("状态码:", error.response?.status);
+        console.log("响应头:", error.response?.headers);
+
+        ElMessage.error(
+            error.response?.data?.message ||
+            '登录失败，请检查用户名和密码'
+        );
+      });
 }
 
 const register = () => {

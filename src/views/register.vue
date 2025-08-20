@@ -79,13 +79,13 @@ const handleReset = () => {
 <style scoped>
 .register-container {
   display: flex;
-  justify-content: center;  /* 水平居中 */
-  align-items: center;      /* 垂直居中 */
-  min-height: 100vh;        /* 至少占满整个视口高度 */
-  width: 100%;              /* 确保宽度占满 */
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
   margin: 0;
-  padding: 20px;            /* 添加内边距防止内容贴边 */
-  box-sizing: border-box;   /* 包含padding在宽度计算内 */
-  background-color: #f5f5f5; /* 与登录页保持一致的背景色 */
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #f5f5f5;
 }
 </style>
