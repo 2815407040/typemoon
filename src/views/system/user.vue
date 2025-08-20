@@ -19,13 +19,24 @@
         <el-input v-model="editForm.userName" disabled />
       </el-form-item>
       <el-form-item label="邮箱">
-        <el-input v-model="editForm.email" />
+        <el-input v-model="editForm.email" :disabled="!canEditUser" />
       </el-form-item>
       <el-form-item label="角色">
-        <el-select v-model="editForm.role" placeholder="请选择角色">
-          <el-option label="超级管理员" value="0" />
-          <el-option label="管理员" value="1" />
-          <el-option label="用户" value="2" />
+        <el-select
+            v-model="editForm.role"
+            placeholder="请选择角色"
+            :disabled="!canEditRole"
+        >
+          <el-option
+              label="管理员"
+              value="1"
+              :disabled="!canSetAdminRole"
+          />
+          <el-option
+              label="用户"
+              value="2"
+              :disabled="!canSetUserRole"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="锁定状态">
@@ -33,12 +44,19 @@
             v-model="editForm.isLocked"
             active-text="已锁定"
             inactive-text="未锁定"
+            :disabled="!canEditLockStatus"
         />
       </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="editDialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="submitEdit">确认</el-button>
+      <el-button
+          type="primary"
+          @click="submitEdit"
+          :disabled="!canEditUser"
+      >
+        确认
+      </el-button>
     </template>
   </el-dialog>
 
@@ -59,7 +77,11 @@
       <el-table-column prop="email" label="邮箱" width="200" />
       <el-table-column prop="isLocked" label="锁定状态" width="90" >
         <template #default="scope">
-          <div @click="toggleLockStatus(scope.row)" style="cursor: pointer">
+          <div
+              @click="toggleLockStatus(scope.row)"
+              style="cursor: pointer"
+              :class="{ 'operation-disabled': !canToggleLock(scope.row) }"
+          >
             <el-icon v-if="scope.row.isLocked" size="20"><Lock /></el-icon>
             <el-icon v-else size="20"><Unlock /></el-icon>
           </div>
@@ -71,10 +93,22 @@
           <el-button link type="primary" size="small" @click="handleDetail(scope.row)">
             Detail
           </el-button>
-          <el-button link type="primary" size="small" @click="handleEdit(scope.row)">
+          <el-button
+              link
+              type="primary"
+              size="small"
+              @click="handleEdit(scope.row)"
+              :disabled="!canEdit(scope.row)"
+          >
             Edit
           </el-button>
-          <el-button link type="danger" size="small" @click="handleDelete(scope.row)">
+          <el-button
+              link
+              type="danger"
+              size="small"
+              @click="handleDelete(scope.row)"
+              :disabled="!hasDeletePermission(scope.row)"
+          >
             Delete
           </el-button>
         </template>
@@ -98,10 +132,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref, computed, watch } from 'vue'
 import axios from 'axios'
 import { ElMessage } from "element-plus";
 import { Lock, Unlock } from '@element-plus/icons-vue'
+import Cookies from 'js-cookie'
 
 // 定义用户数据类型
 interface User {
@@ -113,6 +148,11 @@ interface User {
   isLocked?: boolean
   createTime?: string
 }
+
+// 当前登录用户信息
+const currentUser = ref<any>(null)
+// 正在编辑的用户
+const editingUser = ref<User | null>(null)
 
 // 表格原始数据
 const tableData = ref<User[]>([])
@@ -182,17 +222,89 @@ const pagedTableData = computed(() => {
 
 // 格式化角色显示
 const formatRole = (row: User) => {
-  if(row.role === '0') {
-    return '超级管理员'
-  }else if(row.role === '1') {
-    return '管理员'
-  }else{
-    return '用户'
+  if (row.role === '0') return '超级管理员'
+  return row.role === '1' ? '管理员' : '用户'
+}
+
+// 检查是否有权限删除用户
+const hasDeletePermission = (userToDelete: User) => {
+  if (!currentUser.value) return false
+
+  const currentRole = currentUser.value.role
+
+  // 用户角色不能删除任何用户
+  if (currentRole === '2') {
+    return false
   }
+
+  // 超级管理员可以删除除自己外的所有用户
+  if (currentRole === '0') {
+    return currentUser.value.id !== userToDelete.id
+  }
+
+  // 管理员只能删除角色为用户(2)的用户
+  if (currentRole === '1') {
+    return userToDelete.role === '2'
+  }
+
+  return false
+}
+
+// 检查是否有权限编辑用户
+const canEdit = (user: User) => {
+  if (!currentUser.value) return false
+
+  const currentRole = currentUser.value.role
+
+  // 用户角色不能编辑任何用户
+  if (currentRole === '2') {
+    return false
+  }
+
+  // 超级管理员可以编辑任何用户
+  if (currentRole === '0') {
+    return true
+  }
+
+  // 管理员只能编辑角色为用户(2)的用户
+  if (currentRole === '1') {
+    return user.role === '2'
+  }
+
+  return false
+}
+
+// 检查是否有权限切换锁定状态
+const canToggleLock = (user: User) => {
+  if (!currentUser.value) return false
+
+  const currentRole = currentUser.value.role
+
+  // 用户角色不能切换任何用户锁定状态
+  if (currentRole === '2') {
+    return false
+  }
+
+  // 超级管理员可以切换任何用户锁定状态
+  if (currentRole === '0') {
+    return true
+  }
+
+  // 管理员可以切换用户和管理员的锁定状态
+  if (currentRole === '1') {
+    return user.role === '1' || user.role === '2'
+  }
+
+  return false
 }
 
 // 切换锁定状态（同步到JSON Server）
 const toggleLockStatus = async (row: User) => {
+  if (!canToggleLock(row)) {
+    ElMessage.warning('您当前权限不足')
+    return
+  }
+
   try {
     row.isLocked = !row.isLocked
     await axios.patch(`http://localhost:3001/api/users/${row.id}`, {
@@ -208,12 +320,60 @@ const toggleLockStatus = async (row: User) => {
 
 // 打开编辑对话框
 const handleEdit = (row: User) => {
+  if (!canEdit(row)) {
+    ElMessage.warning('您当前权限不足')
+    return
+  }
+
+  editingUser.value = row
   editForm.value = JSON.parse(JSON.stringify(row))
   editDialogVisible.value = true
 }
 
+// 能否编辑用户信息（邮箱等基础信息）
+const canEditUser = computed(() => {
+  return currentUser.value && currentUser.value.role !== '2' && editingUser.value
+      ? canEdit(editingUser.value)
+      : false
+})
+
+// 能否编辑角色
+const canEditRole = computed(() => {
+  return currentUser.value && editingUser.value
+      ? (currentUser.value.role === '0' || (currentUser.value.role === '1' && editingUser.value.role === '2'))
+      : false
+})
+
+// 能否设置为管理员角色
+const canSetAdminRole = computed(() => {
+  return currentUser.value && currentUser.value.role !== '2'
+})
+
+// 能否设置为用户角色
+const canSetUserRole = computed(() => {
+  return currentUser.value && currentUser.value.role === '0'
+})
+
+// 能否编辑锁定状态
+const canEditLockStatus = computed(() => {
+  return currentUser.value && editingUser.value
+      ? canToggleLock(editingUser.value)
+      : false
+})
+
 // 提交编辑表单（适配JSON Server的PUT请求）
 const submitEdit = async () => {
+  if (!canEditUser.value) {
+    ElMessage.warning('您当前权限不足')
+    return
+  }
+
+  // 管理员只能将用户提升为管理员，不能降级
+  if (currentUser.value.role === '1' && editingUser.value?.role === '2' && editForm.value.role === '2') {
+    ElMessage.warning('您没有权限将用户设置为普通用户')
+    return
+  }
+
   try {
     await axios.put(`http://localhost:3001/api/users/${editForm.value.id}`, editForm.value)
     // 更新本地表格数据
@@ -231,6 +391,11 @@ const submitEdit = async () => {
 
 // 打开删除确认对话框
 const handleDelete = (row: User) => {
+  if (!hasDeletePermission(row)) {
+    ElMessage.warning('您当前权限不足')
+    return
+  }
+
   deleteUserId.value = row.id
   deleteUserName.value = row.userName
   deleteDialogVisible.value = true
@@ -277,8 +442,14 @@ const handleCurrentChange = (val: number) => {
   currentPage4.value = val
 }
 
-// 页面挂载时加载数据
+// 页面挂载时加载数据和当前用户信息
 onMounted(() => {
+  // 获取当前登录用户信息
+  const userCookie = Cookies.get('currentUser')
+  if (userCookie) {
+    currentUser.value = JSON.parse(userCookie)
+  }
+
   loadUserData()
 })
 </script>
@@ -299,5 +470,10 @@ onMounted(() => {
   margin-bottom: 20px;
   padding: 10px;
   background-color: #fff;
+}
+
+.operation-disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
 }
 </style>

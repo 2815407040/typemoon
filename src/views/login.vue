@@ -64,6 +64,8 @@ const handleLogin = () => {
             router.push('/index')
           } else if (role === '2') {
             router.push('/HomeView')
+          }else if (role === '0') {
+            router.push('/index')
           }
         } else {
           ElMessage.error(response.data.message || '登录失败')
