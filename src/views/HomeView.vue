@@ -1,7 +1,7 @@
 <template>
   <div class="home-container">
     <div class="nav">
-      <!-- 移除登录注册按钮区域 -->
+      <!-- 导航栏内容 -->
     </div>
     <div class="main-body">
       <div class="left-panel"></div>
@@ -41,7 +41,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// 搜索相关代码
+// 搜索相关代码（保持不变）
 const mdLines = ref<string[]>([]);
 const mdTitleLines = ref<Array<{ lineNumber: number; content: string; cleanContent: string }>>([]);
 const searchText = ref('');
@@ -59,7 +59,6 @@ const cleanTitleContent = (content: string) => {
 };
 
 onMounted(async () => {
-  // 加载md文件
   try {
     const response = await fetch('/Fate.md');
     if (!response.ok) {
@@ -79,7 +78,6 @@ onMounted(async () => {
   }
 });
 
-// 搜索处理
 const handleSearch = () => {
   const query = searchText.value.trim().toLowerCase();
   if (!query) {
@@ -105,6 +103,19 @@ const selectResult = (item: { lineNumber: number; content: string; cleanContent:
 </script>
 
 <style scoped>
+/* 关键修改：确保根容器占满屏幕高度 */
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.home-container {
+  min-height: 100vh; /* 最小高度为视口高度 */
+  display: flex;
+  flex-direction: column; /* 垂直布局 */
+}
+
 .header{
   background-image: url('../../public/images/header.jpg');
   height: 230px;
@@ -151,37 +162,40 @@ const selectResult = (item: { lineNumber: number; content: string; cleanContent:
   background-color: #f0f0f0;
 }
 
-.main-content{
+/* 主内容区域样式 */
+.main-body{
+  flex: 1; /* 占据剩余所有空间 */
   width: 100%;
-  height: 100%;
-  background-color: #93ccdd;
+  background-color: #aabcbf;
+  display: flex;
+  min-height: 0; /* 解决flex子元素高度计算问题 */
 }
 
-/* 导航栏样式简化 */
+.left-panel{
+  width: 10%;
+  background-color: #c7e4ed;
+  min-height: 100%; /* 与父容器高度保持一致 */
+}
+
+.right-panel{
+  width: 90%;
+  background-color: #d9edf3;
+  display: flex;
+  flex-direction: column; /* 垂直布局 */
+  min-height: 100%; /* 确保与左侧高度一致 */
+}
+
+.main-content{
+  flex: 1; /* 占据右侧面板剩余空间 */
+  background-color: #93ccdd;
+  width: 100%;
+}
+
 .nav{
   height: 30px;
   width: 100%;
   background-image: url('../../public/images/nav.png');
   background-repeat: no-repeat;
   background-size: cover;
-}
-
-.main-body{
-  height: 900px;
-  width: 100%;
-  background-color: #aabcbf;
-  display: flex
-}
-
-.left-panel{
-  height: 1130px;
-  width: 10%;
-  background-color: #c7e4ed;
-}
-
-.right-panel{
-  height: 100%;
-  width: 90%;
-  background-color: #d9edf3;
 }
 </style>
