@@ -4,6 +4,7 @@ import Register from '../views/register.vue'
 import HomeView from '../views/HomeView.vue'
 import Search from '../views/search.vue'
 import Show from '../views/show.vue'
+import Contribution from '../views/contribution.vue'
 import Cookies from 'js-cookie'
 
 const routes = [
@@ -59,6 +60,11 @@ const routes = [
                 name: 'show',
                 component: Show,
                 props: true  // 允许将路由参数作为props传递
+            },
+            {
+                path: 'contribution',
+                name: 'Contribution',
+                component: () => import('../views/Contribution.vue')
             }
         ]
     }

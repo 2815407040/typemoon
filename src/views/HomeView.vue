@@ -7,6 +7,9 @@
       <div class="left-panel"></div>
       <div class="right-panel">
         <div class="header">
+          <div class="contribution-link">
+            <span @click="goToContribution">我要贡献词条</span>
+          </div>
           <div class="search-container">
             <input
                 type="text"
@@ -40,6 +43,13 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
+// 新增：跳转到贡献页面
+const goToContribution = () => {
+  router.push({
+    path: '/HomeView/contribution'
+  })
+}
 
 // 搜索相关代码（保持不变）
 const mdLines = ref<string[]>([]);
@@ -122,6 +132,18 @@ html, body, #app {
   width: 100%;
   position: relative;
 }
+
+/* 新增：贡献词条链接样式 */
+.contribution-link {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
 
 .search-container {
   position: absolute;
