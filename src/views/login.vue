@@ -37,25 +37,39 @@ const user = ref({
 })
 
 const handleLogin = () => {
-  // axios 登录请求
-  axios.get("http://localhost:3001/api/users", { params: user.value }).then(response => {
-    console.log(response.data)
-    if (response.data.length > 0) {
-      ElMessage.success('登录成功')
-      const userInfo = response.data[0]
+  // 前端简单验证
+  if (!user.value.userName || !user.value.password) {
+    ElMessage.warning('用户名和密码不能为空')
+    return
+  }
 
-      Cookies.set('currentUser', JSON.stringify(userInfo), { expires: 1, path: '/' })
-
-      // 获取角色信息
-      const role = userInfo.role
-      if (role === '1') { router.push('/index')}
-      else if (role === '2') { router.push('/HomeView') }
-    } else {
-      ElMessage.error('用户名或密码错误')
-    }
-  }).catch(error => {
-    console.error("登录请求失败:", error)
+  // 关键修复：使用POST请求调用登录接口
+  axios.post("http://localhost:3001/api/users/login", {
+    userName: user.value.userName,
+    password: user.value.password
   })
+      .then(response => {
+        console.log("登录成功:", response.data)
+        ElMessage.success('登录成功')
+        const userInfo = response.data.user
+
+        Cookies.set('currentUser', JSON.stringify(userInfo), { expires: 1, path: '/' })
+
+        // 根据角色跳转
+        if (userInfo.role === '1') {
+          router.push('/index')
+        } else if (userInfo.role === '2') {
+          router.push('/HomeView')
+        }
+      })
+      .catch(error => {
+        console.error("登录请求失败:", error)
+        if (error.response && error.response.status === 401) {
+          ElMessage.error('用户名或密码错误')
+        } else {
+          ElMessage.error('登录失败，请检查网络或服务器')
+        }
+      })
 }
 
 const register = () => {

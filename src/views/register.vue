@@ -55,7 +55,7 @@ const handleRegister = () => {
   }
 
   // 发送注册请求
-  axios.post("http://localhost:3000/sys_user", user.value)
+  axios.post("http://localhost:3001/api/users/register", user.value)
       .then(response => {
         console.log(response.data)
         ElMessage.success('注册成功，请登录')

@@ -17,7 +17,7 @@ app.use(express.json());
 
 // 路由
 app.use('/api/users', userRoutes);
-app.use('/api/roles', roleRoutes);
+app.use('/api/roles', roleRoutes);5
 app.use('/api/menus', menuRoutes); // 确保菜单路由已正确配置
 
 // 启动服务器

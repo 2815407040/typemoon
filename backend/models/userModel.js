@@ -8,22 +8,24 @@ async function register(user) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const sql = `
     INSERT INTO sys_user (userName, password, email, role) 
-    VALUES (?, ?, ?, '2')  -- 默认为普通用户（role=2）
+    VALUES (?, ?, ?, '2')
   `;
     const [result] = await pool.execute(sql, [userName, hashedPassword, email]);
     return result;
 }
 
-// 用户登录（验证密码）
+// typemoon/backend/models/userModel.js
 async function login(userName, password) {
-    // 查询用户
     const sql = 'SELECT * FROM sys_user WHERE userName = ?';
     const [rows] = await pool.execute(sql, [userName]);
-    if (rows.length === 0) return null;
+    if (rows.length === 0) {
+        console.log(`用户不存在: ${userName}`); // 新增日志
+        return null;
+    }
 
     const user = rows[0];
-    // 验证密码
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log(`密码验证结果: ${isPasswordValid}`); // 新增日志
     return isPasswordValid ? user : null;
 }
 
