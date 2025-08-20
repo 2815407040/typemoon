@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed, watch } from 'vue'
+import { onMounted, reactive, ref, computed, } from 'vue'
 import axios from 'axios'
 import { ElMessage } from "element-plus";
 import { Lock, Unlock } from '@element-plus/icons-vue'
@@ -455,14 +455,14 @@ onMounted(() => {
 </script>
 
 <style>
-.demo-pagination-block + .demo-pagination-block {
+.demo-pagination-block {
   margin-top: 0;
 }
-.demo-pagination-block .demonstration {
+.demo-pagination-block{
   margin-bottom: 16px;
 }
 
-.demo-form-inline .el-input {
+.demo-form-inline {
   --el-input-width: 220px;
 }
 
