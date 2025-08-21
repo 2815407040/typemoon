@@ -7,7 +7,7 @@ const menuRoutes = require('./routes/menuRoutes');
 const contributionRoutes = require('./routes/contributionRoutes');
 const app = express();
 const port = 3001;
-
+const fateRoutes = require('./routes/fateRoutes');
 // 中间件
 app.use(cors({
     origin: 'http://localhost:5173', // 允许前端地址访问
@@ -24,5 +24,7 @@ app.use('/api/contributions', contributionRoutes);
 app.listen(port, () => {
     console.log(`后端服务器运行在 http://localhost:${port}`);
 });
+
+app.use('/api', fateRoutes); // 注册Fate.md相关路由
 // 在已有的路由注册后添加
 

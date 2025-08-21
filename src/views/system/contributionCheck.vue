@@ -41,7 +41,7 @@
       <!-- 操作按钮 -->
       <!-- 修改操作按钮，添加点击事件 -->
       <div class="action-buttons" v-if="currentContribution && !loading">
-        <el-button type="success" @click="handleCheck(1)">通过</el-button>
+        <el-button type="success" @click="handleApprove">通过</el-button>
         <el-button type="warning" @click="handleCheck(2)">待定</el-button>
         <el-button type="danger" @click="handleCheck(3)">驳回</el-button>
       </div>
@@ -122,7 +122,102 @@ const handleCurrentChange = (page: number) => {
   currentContribution.value = contributions.value[page - 1] || null;
 };
 
+// 处理通过审核的逻辑
+const handleApprove = async () => {
+  if (!currentContribution.value) return
 
+  try {
+    // 1. 获取Fate.md内容
+    const mdResponse = await fetch('/Fate.md')
+    if (!mdResponse.ok) {
+      throw new Error(`获取Fate.md失败: ${mdResponse.status}`)
+    }
+    const mdContent = await mdResponse.text()
+    const mdLines = mdContent.split(/\r?\n/)
+
+    // 2. 查找indexTitle在Fate.md中的位置和级别
+    const { index: targetIndex, level: check1Level } = findTitleInMd(mdLines, currentContribution.value.indexTitle)
+    if (targetIndex === -1) {
+      ElMessage.error('未找到对应的索引标题')
+      return
+    }
+
+    // 3. 查找插入位置（check2）
+    const insertIndex = findInsertPosition(mdLines, targetIndex, check1Level)
+
+    // 4. 准备要插入的内容
+    const titleToInsert = `${'#'.repeat(check1Level)} ${currentContribution.value.name}`
+    const contentToInsert = currentContribution.value.body.split('\n')
+
+    // 5. 插入内容到正确位置
+    const newMdLines = [
+      ...mdLines.slice(0, insertIndex),
+      titleToInsert,
+      ...contentToInsert,
+      ...mdLines.slice(insertIndex)
+    ]
+    const newMdContent = newMdLines.join('\n')
+
+    // 6. 保存更新后的Fate.md（这里需要后端接口支持）
+    await axios.post('http://localhost:3001/api/update-fate-md', {
+      content: newMdContent
+    })
+
+    // 7. 更新贡献状态为已通过（需要后端接口支持）
+    await axios.patch(`http://localhost:3001/api/contributions/${currentContribution.value.id}`, {
+      check: 1 // 1表示通过
+    })
+
+    ElMessage.success('贡献已通过并已添加到Fate.md')
+
+    // 8. 重新加载贡献列表
+    loadContributionData()
+  } catch (error) {
+    console.error('处理贡献失败:', error)
+    ElMessage.error('处理贡献失败，请稍后重试')
+  }
+}
+
+// 在Markdown中查找标题并返回其位置和级别
+const findTitleInMd = (lines: string[], title: string) => {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (line.startsWith('#')) {
+      // 提取标题级别
+      const levelMatch = line.match(/^#{1,6}/)
+      if (levelMatch) {
+        const level = levelMatch[0].length
+        // 清理标题内容并比较
+        const cleanLine = line.replace(/^#{1,6}\s?/, '').replace(/\*\*/g, '').trim()
+        if (cleanLine === title) {
+          return { index: i, level }
+        }
+      }
+    }
+  }
+  return { index: -1, level: 0 }
+}
+
+// 查找插入位置（check2）
+const findInsertPosition = (lines: string[], startIndex: number, check1Level: number) => {
+  // 从目标标题的下一行开始查找
+  for (let i = startIndex + 1; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (line.startsWith('#')) {
+      // 提取标题级别
+      const levelMatch = line.match(/^#{1,6}/)
+      if (levelMatch) {
+        const level = levelMatch[0].length
+        // 找到同级标题或高一级标题
+        if (level === check1Level || level === check1Level - 1) {
+          return i
+        }
+      }
+    }
+  }
+  // 如果没有找到，就插入到文件末尾
+  return lines.length
+}
 
 // 页面挂载时加载数据
 onMounted(() => {

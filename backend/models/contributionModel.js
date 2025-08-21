@@ -43,6 +43,13 @@ async function updateContributionCheckStatus(id, check) {
     return result;
 }
 
+// 更新贡献状态
+async function updateContributionStatus(id, check) {
+    const sql = 'UPDATE contribution SET check = ? WHERE id = ?';
+    const [result] = await pool.execute(sql, [check, id]);
+    return result;
+}
+
 // 修改获取所有贡献的方法
 async function getAllContributions() {
     const sql = `
@@ -59,5 +66,6 @@ module.exports = {
     createContribution,
     getUserContributions,
     getAllContributions,
-    updateContributionCheckStatus  // 导出新方法
+    updateContributionCheckStatus,  // 导出新方法
+    updateContributionStatus
 };

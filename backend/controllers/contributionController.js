@@ -50,32 +50,21 @@ exports.getAllContributions = async (req, res) => {
 };
 
 // 修改contributionController.js中的更新方法
+// 添加状态更新方法
 exports.updateContributionStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { check } = req.body;
 
-        // 验证参数
-        if (!id || check === undefined) {
-            return res.status(400).json({ message: 'ID和审核状态不能为空' });
+        if (check === undefined) {
+            return res.status(400).json({ message: '审核状态不能为空' });
         }
 
-        if (![1, 2, 3].includes(check)) {
-            return res.status(400).json({ message: '无效的审核状态' });
-        }
-
-        const result = await contributionModel.updateContributionCheckStatus(id, check);
-
-        // 检查是否有记录被更新
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: '未找到该贡献记录' });
-        }
-
-        res.json({ message: '审核状态更新成功' });
+        await contributionModel.updateContributionStatus(id, check);
+        res.json({ message: '贡献状态更新成功' });
     } catch (error) {
-        console.error('更新审核状态失败:', error); // 记录详细错误
         res.status(500).json({
-            message: '更新审核状态失败',
+            message: '更新贡献状态失败',
             error: error.message
         });
     }
