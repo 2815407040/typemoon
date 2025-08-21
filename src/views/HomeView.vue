@@ -1,7 +1,16 @@
 <template>
   <div class="home-container">
     <div class="nav">
-      <!-- 导航栏内容 -->
+      <div class="user-info">
+        <span class="username">{{ currentUser?.userName || '未登录' }}</span>
+        <el-button
+            type="text"
+            class="logout-btn"
+            @click="handleLogout"
+        >
+          退出登录
+        </el-button>
+      </div>
     </div>
     <div class="main-body">
       <div class="left-panel"></div>
@@ -39,10 +48,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import Cookies from 'js-cookie'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 
 // 新增：跳转到贡献页面
 const goToContribution = () => {
@@ -50,6 +62,16 @@ const goToContribution = () => {
     path: '/HomeView/contribution'
   })
 }
+
+interface UserInfo {
+  id: number
+  userName: string
+  role: string
+  email?: string
+}
+
+// 存储当前用户信息
+const currentUser = ref<UserInfo | null>(null)
 
 // 搜索相关代码（保持不变）
 const mdLines = ref<string[]>([]);
@@ -69,6 +91,14 @@ const cleanTitleContent = (content: string) => {
 };
 
 onMounted(async () => {
+  const userCookie = Cookies.get('currentUser')
+  if (userCookie) {
+    currentUser.value = JSON.parse(userCookie)
+  } else {
+    // 如果没有用户信息，跳转到登录页
+    router.push('/login')
+    return
+  }
   try {
     const response = await fetch('/Fate.md');
     if (!response.ok) {
@@ -87,6 +117,29 @@ onMounted(async () => {
     console.error('获取Fate.md失败:', error);
   }
 });
+
+// 监听路由变化，检查登录状态
+watch(
+    () => route.path,
+    (newPath) => {
+      const userCookie = Cookies.get('currentUser')
+      if (!userCookie && !['/login', '/register'].includes(newPath)) {
+        router.push('/login')
+      }
+    }
+)
+
+// 退出登录处理
+const handleLogout = () => {
+  // 清除Cookie中的用户信息
+  Cookies.remove('currentUser', { path: '/' })
+  // 重置当前用户状态
+  currentUser.value = null
+  // 跳转到登录页
+  router.push('/login')
+  // 显示退出成功提示
+  ElMessage.success('退出登录成功')
+}
 
 const handleSearch = () => {
   const query = searchText.value.trim().toLowerCase();
@@ -212,12 +265,35 @@ html, body, #app {
   background-color: #93ccdd;
   width: 100%;
 }
-
 .nav{
   height: 30px;
   width: 100%;
   background-image: url('../../public/images/nav.png');
   background-repeat: no-repeat;
   background-size: cover;
+  display: flex;
+  justify-content: flex-end; /* 靠右对齐 */
+  align-items: center;
+  padding-right: 20px;
+  box-sizing: border-box;
+}
+
+/* 用户信息样式 */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: white;
+}
+
+.username {
+  font-size: 14px;
+}
+
+.logout-btn {
+  color: white !important;
+  font-size: 14px;
+  padding: 0;
+  height: auto;
 }
 </style>

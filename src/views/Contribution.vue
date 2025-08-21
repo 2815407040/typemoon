@@ -6,12 +6,12 @@
       </template>
 
       <el-form :model="formLabelAlign" label-width="120px" class="contribution-form">
-        <el-form-item label="名称">
-          <el-input v-model="formLabelAlign.name" placeholder="请输入名称" />
+        <el-form-item label="标题">
+          <el-input v-model="formLabelAlign.name" placeholder="请输入标题" />
         </el-form-item>
 
-        <el-form-item label="标题">
-          <el-input v-model="formLabelAlign.indexTitle" placeholder="请输入标题" />
+        <el-form-item label="索引">
+          <el-input v-model="formLabelAlign.indexTitle" placeholder="请输入你希望存在哪个标题后面" />
         </el-form-item>
 
         <el-form-item label="内容">
