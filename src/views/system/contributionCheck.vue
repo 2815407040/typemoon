@@ -41,7 +41,7 @@
       <!-- 操作按钮 -->
       <!-- 修改操作按钮，添加点击事件 -->
       <div class="action-buttons" v-if="currentContribution && !loading">
-        <el-button type="success" @click="handleApprove">通过</el-button>
+        <el-button type="success" @click="handleApprove" >通过</el-button>
         <el-button type="warning" @click="handleCheck(2)">待定</el-button>
         <el-button type="danger" @click="handleCheck(3)">驳回</el-button>
       </div>
