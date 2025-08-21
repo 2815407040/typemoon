@@ -41,7 +41,7 @@
       <!-- 操作按钮 -->
       <!-- 修改操作按钮，添加点击事件 -->
       <div class="action-buttons" v-if="currentContribution && !loading">
-        <el-button type="success" @click="handleApprove" >通过</el-button>
+        <el-button type="success" @click="handleCheck" >通过</el-button>
         <el-button type="warning" @click="handleCheck(2)">待定</el-button>
         <el-button type="danger" @click="handleCheck(3)">驳回</el-button>
       </div>
@@ -76,29 +76,75 @@ const handleCheck = async (status: number) => {
   if (!currentContribution.value) return;
 
   try {
-    loading.value = true;
-    // 发送更新状态请求
-    await axios.patch(`${API_BASE_URL}/${currentContribution.value.id}/status`, {
-      check: status
+    // 更新审核状态
+    await axios.patch(`http://localhost:3001/api/contributions/${currentContribution.value.id}`, {
+      check: status // 确保参数名与后端预期一致
     });
 
-    ElMessage.success(status === 1 ? '审核通过' : status === 2 ? '设为待定' : '已驳回');
+    // 如果是通过状态，执行插入操作
+    if (status === 1) {
+      await handleApprove();
+    }
+
+    ElMessage.success(status === 1 ? '审核通过并已插入文档' :
+        status === 2 ? '已设为待定' : '已驳回');
 
     // 重新加载数据
     await loadContributionData();
-
-    // 如果还有数据，显示下一条
-    if (contributions.value.length > 0) {
-      currentPage.value = 1;
-      currentContribution.value = contributions.value[0];
-    }
   } catch (error) {
-    console.error('更新审核状态失败:', error);
+    console.error('审核操作失败:', error);
     ElMessage.error('操作失败，请稍后重试');
-  } finally {
-    loading.value = false;
   }
 };
+
+// 处理通过并插入文档
+const handleApprove = async () => {
+  if (!currentContribution.value) return;
+
+  try {
+    // 1. 获取当前Fate.md内容
+    const response = await fetch('/Fate.md');
+    if (!response.ok) {
+      throw new Error(`获取文档失败: ${response.status}`);
+    }
+    let content = await response.text();
+
+    // 2. 找到索引位置并插入内容
+    const lines = content.split(/\r?\n/);
+    const indexTitle = currentContribution.value.indexTitle;
+    let insertPosition = -1;
+
+    // 查找目标索引位置
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(indexTitle)) {
+        insertPosition = i + 1; // 插入到目标行的下一行
+        break;
+      }
+    }
+
+    // 如果未找到索引位置，默认插入到文档末尾
+    if (insertPosition === -1) {
+      insertPosition = lines.length;
+    }
+
+    // 3. 构造要插入的内容
+    const contributionContent = `\n## ${currentContribution.value.name}\n${currentContribution.value.body}\n`;
+
+    // 4. 插入内容
+    lines.splice(insertPosition, 0, contributionContent);
+    const newContent = lines.join('\n');
+
+    // 5. 保存更新后的文档（这里假设后端有更新文档的接口）
+    await axios.post('http://localhost:3001/api/update-fate-md', {
+      content: newContent
+    });
+
+  } catch (error) {
+    console.error('插入文档失败:', error);
+    throw error; // 抛出错误让上层处理
+  }
+};
+
 // 加载贡献数据
 const loadContributionData = async () => {
   try {
@@ -123,60 +169,7 @@ const handleCurrentChange = (page: number) => {
 };
 
 // 处理通过审核的逻辑
-const handleApprove = async () => {
-  if (!currentContribution.value) return
 
-  try {
-    // 1. 获取Fate.md内容
-    const mdResponse = await fetch('/Fate.md')
-    if (!mdResponse.ok) {
-      throw new Error(`获取Fate.md失败: ${mdResponse.status}`)
-    }
-    const mdContent = await mdResponse.text()
-    const mdLines = mdContent.split(/\r?\n/)
-
-    // 2. 查找indexTitle在Fate.md中的位置和级别
-    const { index: targetIndex, level: check1Level } = findTitleInMd(mdLines, currentContribution.value.indexTitle)
-    if (targetIndex === -1) {
-      ElMessage.error('未找到对应的索引标题')
-      return
-    }
-
-    // 3. 查找插入位置（check2）
-    const insertIndex = findInsertPosition(mdLines, targetIndex, check1Level)
-
-    // 4. 准备要插入的内容
-    const titleToInsert = `${'#'.repeat(check1Level)} ${currentContribution.value.name}`
-    const contentToInsert = currentContribution.value.body.split('\n')
-
-    // 5. 插入内容到正确位置
-    const newMdLines = [
-      ...mdLines.slice(0, insertIndex),
-      titleToInsert,
-      ...contentToInsert,
-      ...mdLines.slice(insertIndex)
-    ]
-    const newMdContent = newMdLines.join('\n')
-
-    // 6. 保存更新后的Fate.md（这里需要后端接口支持）
-    await axios.post('http://localhost:3001/api/update-fate-md', {
-      content: newMdContent
-    })
-
-    // 7. 更新贡献状态为已通过（需要后端接口支持）
-    await axios.patch(`http://localhost:3001/api/contributions/${currentContribution.value.id}`, {
-      check: 1 // 1表示通过
-    })
-
-    ElMessage.success('贡献已通过并已添加到Fate.md')
-
-    // 8. 重新加载贡献列表
-    loadContributionData()
-  } catch (error) {
-    console.error('处理贡献失败:', error)
-    ElMessage.error('处理贡献失败，请稍后重试')
-  }
-}
 
 // 在Markdown中查找标题并返回其位置和级别
 const findTitleInMd = (lines: string[], title: string) => {

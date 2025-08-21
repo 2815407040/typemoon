@@ -37,16 +37,24 @@ module.exports = {
 };
 
 // 修改更新审核状态的方法（check是关键字，需要用反引号包裹）
-async function updateContributionCheckStatus(id, check) {
+// 添加更新审核状态的方法
+async function updateContributionCheckStatus(id, checkStatus) {
     const sql = 'UPDATE contribution SET `check` = ? WHERE id = ?';
-    const [result] = await pool.execute(sql, [check, id]);
+    // 注意：check是MySQL关键字，需要用反引号包裹
+    const [result] = await pool.execute(sql, [checkStatus, id]);
     return result;
 }
 
-// 更新贡献状态
-async function updateContributionStatus(id, check) {
+module.exports = {
+    createContribution,
+    getUserContributions,
+    getAllContributions,
+    updateContributionCheckStatus // 新增导出
+};
+
+async function updateContributionStatus(id, checkStatus) {
     const sql = 'UPDATE contribution SET check = ? WHERE id = ?';
-    const [result] = await pool.execute(sql, [check, id]);
+    const [result] = await pool.execute(sql, [checkStatus, id]);
     return result;
 }
 

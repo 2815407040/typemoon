@@ -37,5 +37,6 @@ router.get('/', contributionController.getAllContributions);
 
 // 添加更新审核状态的路由
 
+// 在typemoon/backend/routes/contributionRoutes.js中添加
 router.patch('/:id', contributionController.updateContributionStatus);
 module.exports = router;

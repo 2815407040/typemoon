@@ -51,6 +51,7 @@ exports.getAllContributions = async (req, res) => {
 
 // 修改contributionController.js中的更新方法
 // 添加状态更新方法
+// 在typemoon/backend/controllers/contributionController.js中添加
 exports.updateContributionStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -60,11 +61,16 @@ exports.updateContributionStatus = async (req, res) => {
             return res.status(400).json({ message: '审核状态不能为空' });
         }
 
-        await contributionModel.updateContributionStatus(id, check);
-        res.json({ message: '贡献状态更新成功' });
+        const result = await contributionModel.updateContributionStatus(id, check);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: '贡献记录不存在' });
+        }
+
+        res.json({ message: '审核状态更新成功' });
     } catch (error) {
         res.status(500).json({
-            message: '更新贡献状态失败',
+            message: '更新审核状态失败',
             error: error.message
         });
     }
