@@ -22,9 +22,9 @@
               <el-menu-item index="/index/system/role">角色管理</el-menu-item>
               <el-menu-item index="/index/system/menu">菜单管理</el-menu-item>
             </el-sub-menu>
-            <el-menu-item index="2">
-              <span>用户设置</span>
-            </el-menu-item>
+            <<el-menu-item index="/index/system/contributionCheck">
+            <span>用户设置</span>
+          </el-menu-item>
             <el-menu-item index="3">
               <span>客户管理</span>
             </el-menu-item>

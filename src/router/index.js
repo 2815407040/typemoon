@@ -42,6 +42,11 @@ const routes = [
                 name: 'Menu',
                 component: () => import('../views/system/menu.vue'),
             },
+            {
+                path: 'system/contributionCheck',
+                name: 'ContributionCheck',
+                component: () => import('../views/system/contributionCheck.vue'),
+            }
 
         ]
     },
