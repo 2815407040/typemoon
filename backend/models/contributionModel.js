@@ -1,11 +1,11 @@
 const pool = require('../config/db');
 
-// 创建贡献
+// 创建贡献（添加check字段）
 async function createContribution(contribution) {
     const { userId, name, indexTitle, body } = contribution;
     const sql = `
-        INSERT INTO contribution (userId, name, indexTitle, body) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO contribution (userId, name, indexTitle, body, check)
+        VALUES (?, ?, ?, ?, 0)  -- 默认0为未审核
     `;
     const [result] = await pool.execute(sql, [userId, name, indexTitle, body]);
     return result;
@@ -21,59 +21,24 @@ async function getUserContributions(userId) {
 // 获取所有贡献
 async function getAllContributions() {
     const sql = `
-        SELECT c.*, u.userName 
-        FROM contribution c
-        JOIN sys_user u ON c.userId = u.id
-        ORDER BY c.id DESC
-    `;
-    const [rows] = await pool.execute(sql);
-    return rows;
-}
-
-module.exports = {
-    createContribution,
-    getUserContributions,
-    getAllContributions
-};
-
-// 修改更新审核状态的方法（check是关键字，需要用反引号包裹）
-// 添加更新审核状态的方法
-async function updateContributionCheckStatus(id, checkStatus) {
-    const sql = 'UPDATE contribution SET `check` = ? WHERE id = ?';
-    // 注意：check是MySQL关键字，需要用反引号包裹
-    const [result] = await pool.execute(sql, [checkStatus, id]);
-    return result;
-}
-
-module.exports = {
-    createContribution,
-    getUserContributions,
-    getAllContributions,
-    updateContributionCheckStatus // 新增导出
-};
-
-async function updateContributionStatus(id, checkStatus) {
-    const sql = 'UPDATE contribution SET check = ? WHERE id = ?';
-    const [result] = await pool.execute(sql, [checkStatus, id]);
-    return result;
-}
-
-// 修改获取所有贡献的方法
-async function getAllContributions() {
-    const sql = `
         SELECT c.*, u.userName
         FROM contribution c
                  JOIN sys_user u ON c.userId = u.id
-        WHERE c.check = 0
         ORDER BY c.id DESC
     `;
     const [rows] = await pool.execute(sql);
     return rows;
 }
+
+// 新增：更新贡献审核状态
+async function updateContributionStatus(id, check) {
+    const sql = 'UPDATE contribution SET check = ? WHERE id = ?';
+    await pool.execute(sql, [check, id]);
+}
+
 module.exports = {
     createContribution,
     getUserContributions,
     getAllContributions,
-    updateContributionCheckStatus,  // 导出新方法
-    updateContributionStatus
+    updateContributionStatus  // 导出新方法
 };
