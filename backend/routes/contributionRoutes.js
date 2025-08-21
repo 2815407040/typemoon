@@ -1,0 +1,24 @@
+const express = require('express');
+const router = express.Router();
+const contributionController = require('../controllers/contributionController');
+const { body } = require('express-validator');
+
+// 创建贡献（带参数验证）
+router.post(
+    '/',
+    [
+        body('userId').notEmpty().withMessage('用户ID不能为空'),
+        body('name').notEmpty().withMessage('名称不能为空'),
+        body('indexTitle').notEmpty().withMessage('标题不能为空'),
+        body('body').notEmpty().withMessage('内容不能为空')
+    ],
+    contributionController.createContribution
+);
+
+// 获取用户的贡献
+router.get('/user/:userId', contributionController.getUserContributions);
+
+// 获取所有贡献
+router.get('/', contributionController.getAllContributions);
+
+module.exports = router;

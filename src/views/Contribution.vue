@@ -1,59 +1,116 @@
 <template>
-  <!-- 外层容器用于居中表单 -->
-  <div class="form-container">
-    <el-form
-        :label-position="labelPosition"
-        label-width="auto"
-        :model="formLabelAlign"
-        style="max-width: 600px"
-    >
-      <el-form-item label="标题" :label-position="itemLabelPosition">
-        <el-input v-model="formLabelAlign.name" />
-      </el-form-item>
-      <el-form-item label="建议放于XX标题下" :label-position="itemLabelPosition">
-        <el-input v-model="formLabelAlign.region" />
-      </el-form-item>
-      <el-form-item label="正文" :label-position="itemLabelPosition">
-        <!-- 调整rows属性为更大的值，设置min-height确保显示多行 -->
-        <el-input
-            v-model="formLabelAlign.type"
-            type="textarea"
-            :rows="4"
-        style="width: 800px"
-        resize="none"
-        />
-      </el-form-item>
-    </el-form>
+  <div class="contribution-container">
+    <el-card>
+      <template #header>
+        <h2>提交贡献</h2>
+      </template>
+
+      <el-form :model="formLabelAlign" label-width="120px" class="contribution-form">
+        <el-form-item label="名称">
+          <el-input v-model="formLabelAlign.name" placeholder="请输入名称" />
+        </el-form-item>
+
+        <el-form-item label="标题">
+          <el-input v-model="formLabelAlign.indexTitle" placeholder="请输入标题" />
+        </el-form-item>
+
+        <el-form-item label="内容">
+          <el-input
+              v-model="formLabelAlign.body"
+              type="textarea"
+              rows="8"
+              placeholder="请输入贡献内容"
+          />
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="submitContribution">提交</el-button>
+          <el-button @click="resetForm">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
   </div>
 </template>
 
-<script lang="ts" setup>
-import { reactive, ref } from 'vue'
-import type { FormItemProps, FormProps } from 'element-plus'
+<script setup lang="ts">
+import { ref, reactive } from 'vue';
+import { ElMessage } from 'element-plus';
+import axios from 'axios';
+import Cookies from 'js-cookie';
 
-const labelPosition = ref<FormProps['labelPosition']>('right')
-const itemLabelPosition = ref<FormItemProps['labelPosition']>('')
+// 表单数据
 const formLabelAlign = reactive({
   name: '',
-  region: '',
-  type: '',
-})
+  indexTitle: '',
+  body: ''
+});
+
+// 获取当前登录用户信息
+const getCurrentUser = () => {
+  const userCookie = Cookies.get('currentUser');
+  return userCookie ? JSON.parse(userCookie) : null;
+};
+
+// 提交贡献
+const submitContribution = async () => {
+  // 验证表单
+  if (!formLabelAlign.name) {
+    ElMessage.warning('请输入名称');
+    return;
+  }
+  if (!formLabelAlign.indexTitle) {
+    ElMessage.warning('请输入标题');
+    return;
+  }
+  if (!formLabelAlign.body) {
+    ElMessage.warning('请输入内容');
+    return;
+  }
+
+  // 获取当前用户
+  const currentUser = getCurrentUser();
+  if (!currentUser || !currentUser.id) {
+    ElMessage.error('请先登录');
+    return;
+  }
+
+  try {
+    // 准备提交的数据
+    const contributionData = {
+      userId: currentUser.id,
+      name: formLabelAlign.name,
+      indexTitle: formLabelAlign.indexTitle,
+      body: formLabelAlign.body
+    };
+
+    // 发送请求到后端
+    await axios.post('http://localhost:3001/api/contributions', contributionData);
+    ElMessage.success('贡献提交成功');
+    resetForm();
+  } catch (error) {
+    console.error('提交贡献失败:', error);
+    ElMessage.error('提交失败，请稍后重试');
+  }
+};
+
+// 重置表单
+const resetForm = () => {
+  formLabelAlign.name = '';
+  formLabelAlign.indexTitle = '';
+  formLabelAlign.body = '';
+};
 </script>
 
 <style scoped>
-/* 表单居中样式 */
-.form-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 30vh; /* 适当增加容器高度以容纳多行输入框 */
+.contribution-container {
   padding: 20px;
 }
 
-/* 针对textarea的额外样式 */
-.el-textarea__inner {
-  min-height: 200px; /* 确保至少显示4行高度 */
-  height: auto; /* 允许高度随内容增加 */
-  line-height: 1.5; /* 优化行间距 */
+.contribution-form {
+  margin-top: 20px;
+}
+
+.el-form-item {
+  margin-bottom: 20px;
 }
 </style>
