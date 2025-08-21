@@ -21,4 +21,7 @@ router.get('/user/:userId', contributionController.getUserContributions);
 // 获取所有贡献
 router.get('/', contributionController.getAllContributions);
 
+// 添加更新审核状态的路由
+router.patch('/:id/status', contributionController.updateContributionStatus);
+
 module.exports = router;

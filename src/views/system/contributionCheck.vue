@@ -39,10 +39,11 @@
       </div>
 
       <!-- 操作按钮 -->
+      <!-- 修改操作按钮，添加点击事件 -->
       <div class="action-buttons" v-if="currentContribution && !loading">
-        <el-button type="success" >通过</el-button>
-        <el-button type="success" >待定</el-button>
-        <el-button type="danger" >驳回</el-button>
+        <el-button type="success" @click="handleCheck(1)">通过</el-button>
+        <el-button type="warning" @click="handleCheck(2)">待定</el-button>
+        <el-button type="danger" @click="handleCheck(3)">驳回</el-button>
       </div>
     </el-card>
   </div>
@@ -69,7 +70,35 @@ const currentContribution = ref<Contribution | null>(null)
 const currentPage = ref(1)
 const total = ref(0)
 const loading = ref(true)
+const API_BASE_URL = 'http://localhost:3001/api/contributions';
 
+const handleCheck = async (status: number) => {
+  if (!currentContribution.value) return;
+
+  try {
+    loading.value = true;
+    // 发送更新状态请求
+    await axios.patch(`${API_BASE_URL}/${currentContribution.value.id}/status`, {
+      check: status
+    });
+
+    ElMessage.success(status === 1 ? '审核通过' : status === 2 ? '设为待定' : '已驳回');
+
+    // 重新加载数据
+    await loadContributionData();
+
+    // 如果还有数据，显示下一条
+    if (contributions.value.length > 0) {
+      currentPage.value = 1;
+      currentContribution.value = contributions.value[0];
+    }
+  } catch (error) {
+    console.error('更新审核状态失败:', error);
+    ElMessage.error('操作失败，请稍后重试');
+  } finally {
+    loading.value = false;
+  }
+};
 // 加载贡献数据
 const loadContributionData = async () => {
   try {
@@ -89,9 +118,9 @@ const loadContributionData = async () => {
 
 // 分页切换
 const handleCurrentChange = (page: number) => {
-  currentPage.value = page
-  currentContribution.value = contributions.value[page - 1] || null
-}
+  currentPage.value = page;
+  currentContribution.value = contributions.value[page - 1] || null;
+};
 
 
 

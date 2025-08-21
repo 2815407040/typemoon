@@ -35,3 +35,29 @@ module.exports = {
     getUserContributions,
     getAllContributions
 };
+
+// 修改更新审核状态的方法（check是关键字，需要用反引号包裹）
+async function updateContributionCheckStatus(id, check) {
+    const sql = 'UPDATE contribution SET `check` = ? WHERE id = ?';
+    const [result] = await pool.execute(sql, [check, id]);
+    return result;
+}
+
+// 修改获取所有贡献的方法
+async function getAllContributions() {
+    const sql = `
+        SELECT c.*, u.userName
+        FROM contribution c
+                 JOIN sys_user u ON c.userId = u.id
+        WHERE c.check = 0
+        ORDER BY c.id DESC
+    `;
+    const [rows] = await pool.execute(sql);
+    return rows;
+}
+module.exports = {
+    createContribution,
+    getUserContributions,
+    getAllContributions,
+    updateContributionCheckStatus  // 导出新方法
+};
