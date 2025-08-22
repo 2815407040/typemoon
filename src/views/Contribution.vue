@@ -49,6 +49,7 @@ const formLabelAlign = reactive({
 const getCurrentUser = () => {
   const userCookie = Cookies.get('currentUser');
   return userCookie ? JSON.parse(userCookie) : null;
+  console.log("userCookie", userCookie);
 };
 
 // 提交贡献

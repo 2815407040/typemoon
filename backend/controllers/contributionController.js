@@ -1,44 +1,70 @@
-const pool = require('../config/db');
+const contributionModel = require('../models/contributionModel');
+const { validationResult } = require('express-validator');
 
-// 创建贡献（添加check字段）
-async function createContribution(contribution) {
-    const { userId, name, indexTitle, body } = contribution;
-    const sql = `
-        INSERT INTO contribution (userId, name, indexTitle, body, check) 
-        VALUES (?, ?, ?, ?, 0)  -- 默认0为未审核
-    `;
-    const [result] = await pool.execute(sql, [userId, name, indexTitle, body]);
-    return result;
-}
+// 创建贡献
+exports.createContribution = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
 
-// 获取用户的贡献列表
-async function getUserContributions(userId) {
-    const sql = 'SELECT * FROM contribution WHERE userId = ? ORDER BY id DESC';
-    const [rows] = await pool.execute(sql, [userId]);
-    return rows;
-}
+        const result = await contributionModel.createContribution(req.body);
+        res.status(201).json({
+            message: '贡献创建成功',
+            id: result.insertId
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: '创建贡献失败',
+            error: error.message
+        });
+    }
+};
+
+// 获取用户的贡献
+exports.getUserContributions = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const contributions = await contributionModel.getUserContributions(userId);
+        res.json(contributions);
+    } catch (error) {
+        res.status(500).json({
+            message: '获取贡献列表失败',
+            error: error.message
+        });
+    }
+};
 
 // 获取所有贡献
-async function getAllContributions() {
-    const sql = `
-        SELECT c.*, u.userName 
-        FROM contribution c
-        JOIN sys_user u ON c.userId = u.id
-        ORDER BY c.id DESC
-    `;
-    const [rows] = await pool.execute(sql);
-    return rows;
-}
+exports.getAllContributions = async (req, res) => {
+    try {
+        const contributions = await contributionModel.getAllContributions();
+        res.json(contributions);
+    } catch (error) {
+        res.status(500).json({
+            message: '获取所有贡献失败',
+            error: error.message
+        });
+    }
+};
 
-// 新增：更新贡献审核状态
-async function updateContributionStatus(id, check) {
-    const sql = 'UPDATE contribution SET check = ? WHERE id = ?';
-    await pool.execute(sql, [check, id]);
-}
+// 新增：处理审核状态更新
+exports.updateContributionStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { check } = req.body;
 
-module.exports = {
-    createContribution,
-    getUserContributions,
-    getAllContributions,
-    updateContributionStatus  // 导出新方法
+        if (check === undefined) {
+            return res.status(400).json({ message: '审核状态不能为空' });
+        }
+
+        await contributionModel.updateContributionStatus(id, check);
+        res.json({ message: '审核状态更新成功' });
+    } catch (error) {
+        res.status(500).json({
+            message: '更新审核状态失败',
+            error: error.message  // 输出具体错误信息便于调试
+        });
+    }
 };
