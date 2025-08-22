@@ -98,38 +98,37 @@ const handlePageChange = (page: number) => {
 // 处理审核操作
 const handleAction = async (action: string) => {
   if (!currentContribution.value) return
-  const statusMap = {
-    pass: 1,
-    pending: 2,
-    reject: 3
-  }
-  const isCheck = statusMap[action]
 
   try {
-    // 调用API更新状态
-    await axios.patch(`http://localhost:3000/api/contributions/${currentContribution.value.id}`, {
-      isCheck
-    })
+    if (action === 'pass') {
+      // 调用通过接口（会触发Markdown写入）
+      await axios.post(`http://localhost:3000/api/contributions/${currentContribution.value.id}/approve`);
+    } else {
+      // 处理待定和驳回（仅更新状态）
+      const statusMap = { pending: 2, reject: 3 };
+      await axios.patch(`http://localhost:3000/api/contributions/${currentContribution.value.id}`, {
+        isCheck: statusMap[action]
+      });
+    }
 
-    const currentIndex = contributions.value.findIndex(item => item.id === currentContribution.value!.id)
+    // 原有本地数据更新逻辑保持不变
+    const currentIndex = contributions.value.findIndex(item => item.id === currentContribution.value!.id);
     if (currentIndex > -1) {
-      contributions.value.splice(currentIndex, 1)
-      total.value--
+      contributions.value.splice(currentIndex, 1);
+      total.value--;
     }
 
     if (currentPage.value > 1 && currentPage.value > contributions.value.length) {
-      currentPage.value--
+      currentPage.value--;
     }
 
-    // 更新当前显示内容
-    updateCurrentContribution()
-
-    ElMessage.success('操作成功')
+    updateCurrentContribution();
+    ElMessage.success('操作成功');
   } catch (error) {
-    console.error('操作失败:', error)
-    ElMessage.error('操作失败，请稍后重试')
+    console.error('操作失败:', error);
+    ElMessage.error('操作失败，请稍后重试');
   }
-}
+};
 
 onMounted(() => {
   loadContributionData()
