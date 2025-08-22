@@ -4,8 +4,8 @@ const pool = require('../config/db');
 async function createContribution(contribution) {
     const { userId, name, indexTitle, body } = contribution;
     const sql = `
-        INSERT INTO contribution (userId, name, indexTitle, body, check)
-        VALUES (?, ?, ?, ?, 0)  -- 默认0为未审核
+        INSERT INTO contribution (userId, name, indexTitle, body, is_check)
+        VALUES (?, ?, ?, ?, 0) 
     `;
     const [result] = await pool.execute(sql, [userId, name, indexTitle, body]);
     return result;
