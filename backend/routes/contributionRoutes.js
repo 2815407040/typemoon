@@ -18,10 +18,4 @@ router.post(
 // 获取用户的贡献
 router.get('/user/:userId', contributionController.getUserContributions);
 
-// 获取所有贡献
-router.get('/', contributionController.getAllContributions);
-
-// 新增：审核状态更新路由
-router.patch('/:id', contributionController.updateContributionStatus);
-
 module.exports = router;

@@ -35,36 +35,3 @@ exports.getUserContributions = async (req, res) => {
         });
     }
 };
-
-// 获取所有贡献
-exports.getAllContributions = async (req, res) => {
-    try {
-        const contributions = await contributionModel.getAllContributions();
-        res.json(contributions);
-    } catch (error) {
-        res.status(500).json({
-            message: '获取所有贡献失败',
-            error: error.message
-        });
-    }
-};
-
-// 新增：处理审核状态更新
-exports.updateContributionStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { check } = req.body;
-
-        if (check === undefined) {
-            return res.status(400).json({ message: '审核状态不能为空' });
-        }
-
-        await contributionModel.updateContributionStatus(id, check);
-        res.json({ message: '审核状态更新成功' });
-    } catch (error) {
-        res.status(500).json({
-            message: '更新审核状态失败',
-            error: error.message  // 输出具体错误信息便于调试
-        });
-    }
-};
