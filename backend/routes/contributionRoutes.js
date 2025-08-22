@@ -18,4 +18,14 @@ router.post(
 // 获取用户的贡献
 router.get('/', contributionController.getContributions);
 
+router.patch(
+    '/:id',
+    [
+        body('isCheck').isInt({ min: 1, max: 3 }).withMessage('审核状态必须是1-3之间的整数')
+    ],
+    contributionController.updateContributionStatus
+);
+
+router.post('/:id/approve', contributionController.approveContribution);
+
 module.exports = router;

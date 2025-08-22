@@ -17,11 +17,25 @@
         </el-descriptions>
       </div>
 
+      <!-- 空状态 -->
+      <el-empty v-else class="empty-state" description="暂无待审核内容"></el-empty>
+
       <!-- 操作按钮 -->
-      <div class="action-buttons" >
-        <el-button type="success" @click="(1)">通过</el-button>
-        <el-button type="warning" @click="(2)">待定</el-button>
-        <el-button type="danger" @click="(3)">驳回</el-button>
+      <div class="action-buttons">
+        <el-button type="success" @click="handleAction('pass')">通过</el-button>
+        <el-button type="warning" @click="handleAction('pending')">待定</el-button>
+        <el-button type="danger" @click="handleAction('reject')">驳回</el-button>
+      </div>
+
+      <!-- 分页控件 -->
+      <div class="pagination" v-if="total > 0">
+        <el-pagination
+            layout="prev, pager, next"
+            :total="total"
+            :page-size="1"
+            :current-page="currentPage"
+            @current-change="handlePageChange"
+        />
       </div>
     </el-card>
   </div>
@@ -30,32 +44,90 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import { ElMessage, ElEmpty, ElLoading } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
 interface Contribution {
   id: number
   userId: number
-  userName: string  // 新增：显示提交用户的用户名
+  userName: string
   name: string
   indexTitle: string
-  body: Text
+  body: string
   is_check: number
 }
 
 const contributions = ref<Contribution[]>([])
 const currentContribution = ref<Contribution | null>(null)
 const total = ref(0)
-const currentPage = ref(1)
+const currentPage = ref(1) // 当前页码
 
+
+// 加载贡献数据
 const loadContributionData = async () => {
+
   try {
-    const response = await axios.get('http://localhost:3001/api/contributions')
-    contributions.value = response.data
-    total.value = contributions.value.length     //总条数
-    currentContribution.value = contributions.value[currentPage.value - 1] || null
+
+    const response = await axios.get('http://localhost:3000/api/contributions', {
+      params: {
+        isCheck: 0
+      }
+    })
+
+    contributions.value = response.data.list
+    total.value = response.data.total
+    // 加载完成后显示当前页数据
+    updateCurrentContribution()
   } catch (error) {
     console.error('加载贡献数据失败:', error)
     ElMessage.error('加载数据失败，请稍后重试')
+  }
+}
+
+// 更新当前显示的贡献内容
+const updateCurrentContribution = () => {
+  // 分页逻辑：当前页索引 = 当前页码 - 1
+  currentContribution.value = contributions.value[currentPage.value - 1] || null
+}
+
+// 处理分页切换
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+  updateCurrentContribution()
+}
+
+// 处理审核操作
+const handleAction = async (action: string) => {
+  if (!currentContribution.value) return
+  const statusMap = {
+    pass: 1,
+    pending: 2,
+    reject: 3
+  }
+  const isCheck = statusMap[action]
+
+  try {
+    // 调用API更新状态
+    await axios.patch(`http://localhost:3000/api/contributions/${currentContribution.value.id}`, {
+      isCheck
+    })
+
+    const currentIndex = contributions.value.findIndex(item => item.id === currentContribution.value!.id)
+    if (currentIndex > -1) {
+      contributions.value.splice(currentIndex, 1)
+      total.value--
+    }
+
+    if (currentPage.value > 1 && currentPage.value > contributions.value.length) {
+      currentPage.value--
+    }
+
+    // 更新当前显示内容
+    updateCurrentContribution()
+
+    ElMessage.success('操作成功')
+  } catch (error) {
+    console.error('操作失败:', error)
+    ElMessage.error('操作失败，请稍后重试')
   }
 }
 
@@ -86,11 +158,6 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-.pagination-container {
-  margin: 20px 0;
-  text-align: center;
-}
-
 .action-buttons {
   display: flex;
   gap: 10px;
@@ -103,9 +170,9 @@ onMounted(() => {
   text-align: center;
 }
 
-.loading-state {
-  padding: 50px 0;
+/* 分页样式 */
+.pagination {
+  margin-top: 20px;
   text-align: center;
-  color: #666;
 }
 </style>

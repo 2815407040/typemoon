@@ -44,7 +44,7 @@ const handleLogin = () => {
   }
 
   // 改用POST请求，使用正确的登录接口地址
-  axios.post("http://localhost:3001/api/users/login", user.value,{
+  axios.post("http://localhost:3000/api/users/login", user.value,{
     headers: {
       'Content-Type': 'application/json'
     }

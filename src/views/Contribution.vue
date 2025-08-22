@@ -85,7 +85,7 @@ const submitContribution = async () => {
     };
 
     // 发送请求到后端
-    await axios.post('http://localhost:3001/api/contributions', contributionData);
+    await axios.post('http://localhost:3000/api/contributions', contributionData);
     ElMessage.success('贡献提交成功');
     resetForm();
   } catch (error) {
