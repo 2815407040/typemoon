@@ -11,14 +11,19 @@ async function createContribution(contribution) {
     return result;
 }
 
-// 获取用户的贡献列表
-async function getUserContributions(userId) {
-    const sql = 'SELECT * FROM contribution WHERE userId = ? ORDER BY id DESC';
-    const [rows] = await pool.execute(sql, [userId]);
+async function getContributions() {
+    const sql = `SELECT * FROM contribution`;
+    const [rows] = await pool.execute(sql);
     return rows;
 }
+// // 获取用户的贡献列表
+// async function getUserContributions(userId) {
+//     const sql = 'SELECT * FROM contribution WHERE userId = ? ORDER BY id DESC';
+//     const [rows] = await pool.execute(sql, [userId]);
+//     return rows;
+// }
 
 module.exports = {
     createContribution,
-    getUserContributions
+    getContributions
 };

@@ -16,6 +16,6 @@ router.post(
 );
 
 // 获取用户的贡献
-router.get('/user/:userId', contributionController.getUserContributions);
+router.get('/', contributionController.getContributions);
 
 module.exports = router;

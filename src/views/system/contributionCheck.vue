@@ -8,7 +8,7 @@
       <!-- 内容展示区域 -->
       <div v-if="currentContribution" class="contribution-content">
         <el-descriptions column="1" border>
-          <el-descriptions-item label="提交用户">{{ currentContribution.userName }}</el-descriptions-item>
+          <el-descriptions-item label="提交用户">{{ currentContribution.userId }}</el-descriptions-item>
           <el-descriptions-item label="标题">{{ currentContribution.name }}</el-descriptions-item>
           <el-descriptions-item label="索引位置">{{ currentContribution.indexTitle}}</el-descriptions-item>
           <el-descriptions-item label="内容">
