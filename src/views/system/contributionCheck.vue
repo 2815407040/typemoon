@@ -103,6 +103,10 @@ const handleAction = async (action: string) => {
     if (action === 'pass') {
       // 调用通过接口（会触发Markdown写入）
       await axios.post(`http://localhost:3000/api/contributions/${currentContribution.value.id}/approve`);
+      // 额外发送更新状态请求，将is_check设置为1
+      await axios.patch(`http://localhost:3000/api/contributions/${currentContribution.value.id}`, {
+        isCheck: 1
+      });
     } else {
       // 处理待定和驳回（仅更新状态）
       const statusMap = { pending: 2, reject: 3 };
